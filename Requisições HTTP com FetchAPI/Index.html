@@ -9,22 +9,18 @@
 </head>
 
 <body>
-    <h1>Incluir ou Alterar título</h1>
+    <h1>Buscar, Incluir ou Alterar Filmes</h1>
     <div>
-        <label for="inc_nome">Nome </label>
-        <input type="text" id="inc_nome" name="inc_nome"><br>
-        <label for="inc_desc">Descrição </label>
-        <input type="text" id="inc_desc" name="inc_desc"><br>
+        <label for="filmeId">ID </label>
+        <input type="text" id="filmeId" name="filmeId"><br>
+        <label for="nome">Nome </label>
+        <input type="text" id="nome" name="nome"><br>
+        <label for="desc">Descrição </label>
+        <input type="text" id="desc" name="desc"><br>
         <button onclick="incluir()">Incluir</button>
         <button onclick="alterar()">Alterar</button>
-    </div>
-
-    <h1>Buscar ou Remover título pelo ID</h1>
-    <div>
-        <label for="searchId">ID </label>
-        <input type="text" id="searchId" name="searchId"><br>
         <button onclick="buscar()">Buscar</button>
-        <button onclick="remover()">Buscar</button>
+        <button onclick="remover()">Remover</button>
     </div>
 
     <h1>Listar resultado da pesquisa</h1>
@@ -35,39 +31,163 @@
     </div>
 
     <script>
-        const URL = 'http://localhost:8080';
+        const URL = 'http://localhost:8080/titulo';
         
         incluir = () => {
+            let body = {
+                id: 0,
+                nome: nome.value,
+                descricao: desc.value
+            };
 
+            let options = {
+                method: "POST",
+                body: JSON.stringify(body),
+                headers: { 'Content-Type':'application/json' }
+            };
+
+            fetch(URL, options)
+                .then(resp => resp.json())
+                .then(data => {
+                    listar();
+                    alert("Cadastro realizado com sucesso!")
+                    return data;
+                })
+                .catch((error) => {
+                    alert("Aconteceu uma falha!")
+                    console.log(error)
+                });
         }
 
         alterar = () => {
+            let id = filmeId.value === '' ? 0 : filmeId.value;
 
+            let body = {
+                id: 0,
+                nome: nome.value,
+                descricao: desc.value
+            };
+
+            let options = {
+                method: "PUT",
+                body: JSON.stringify(body),
+                headers: { 'Content-Type':'application/json' }
+            };
+
+            fetch(URL + "/" + id, options)
+                .then(data => {
+                    if(data.status === 404)
+                        throw Error('Filme não encontrado');
+
+                    return data.json();
+                })
+                .then(result => {
+                    listar();
+                    alert("Alteração realizada com sucesso!")
+                })
+                .catch(error => {
+                    console.log(error);
+                    alert('Filme não encontrado')
+                });
         }
 
         buscar = () => {
+            let urlGet = URL + "/" + filmeId.value;
+            
+            fetch(urlGet)
+                .then(data => {
+                    if(data.status === 404)
+                        throw Error('Filme não encontrado');
 
+                    return data.json();
+                })
+                .then(result => {
+                    nome.value = result.nome
+                    desc.value = result.descricao
+                })
+                .catch(error => {
+                    console.log(error);
+                    alert('Filme não encontrado')
+                });
         }
 
         remover = () => {
+            let urlDel = URL + "/" + filmeId.value;
 
+            let options = {
+                method: "DELETE"
+            };
+
+            fetch(urlDel, options)
+                .then(result => {
+
+                    if(result.status === 404)
+                        alert('Filme não encontrado')
+
+                    listar();
+                })
+                .catch(e => {
+                    console.log(e)
+
+                    alert("Aconteceu uma falha!")
+                });
         }
 
         listar = () => {
-
+            fetch(URL)
+                .then(resp => resp.json())
+                .then(data => exibirResultado(data))
+                .catch(error => {
+                    console.log(error)
+                    alert("Aconteceu uma falha!")
+                });
         }
 
-        limparResultados = () => {
+        limparResultados = () => titulos.innerHTML = "";
 
+        criarItem = (parent, id, text) => {
+            let li = document.createElement("li");
+            
+            li.appendChild(document.createTextNode(text));
+            li.setAttribute("id", id);
+    
+            return li;
         }
+    
+        exibirResultado = (retornoApi) => {
+            let result = formatarResultado(retornoApi);
+
+            let ul = document.getElementById("titulos");
+            limparResultados();
+    
+            for (let index = 0; index < result.length; index++) {
+                let li = criarItem(ul, index, result[index]);
+    
+                ul.appendChild(li);
+            }       
+        }
+    
+        formatarResultado = (list) => list.map((item) => `id: ${item.id} - Nome: ${item.nome} - Descrição: ${item.descricao}`);
     </script>
 
     <style>
-        li,
         input,
         label,
         button {
             font-size: 20px;
+            margin-top: 5px;
+            margin-right: 5px;
+            margin-left: 5px;
+        }
+        button {
+            margin-bottom: 20px;
+        }
+        li {
+            font-size: 20px;
+        }
+        h1 {
+            margin-top: 0px;
+            margin-bottom: 0px;
         }
     </style>
 </body>

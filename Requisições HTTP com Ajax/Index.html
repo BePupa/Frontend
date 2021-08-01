@@ -5,26 +5,22 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Títulos</title>
+    <title>Filmes</title>
 </head>
 
 <body>
-    <h1>Incluir ou Alterar título</h1>
+    <h1>Buscar, Incluir ou Alterar Filmes</h1>
     <div>
-        <label for="inc_nome">Nome </label>
-        <input type="text" id="inc_nome" name="inc_nome"><br>
-        <label for="inc_desc">Descrição </label>
-        <input type="text" id="inc_desc" name="inc_desc"><br>
+        <label for="filmeId">ID </label>
+        <input type="text" id="filmeId" name="filmeId"><br>
+        <label for="nome">Nome </label>
+        <input type="text" id="nome" name="nome"><br>
+        <label for="desc">Descrição </label>
+        <input type="text" id="desc" name="desc"><br>
         <button onclick="incluir()">Incluir</button>
         <button onclick="alterar()">Alterar</button>
-    </div>
-
-    <h1>Buscar ou Remover título pelo ID</h1>
-    <div>
-        <label for="searchId">ID </label>
-        <input type="text" id="searchId" name="searchId"><br>
         <button onclick="buscar()">Buscar</button>
-        <button onclick="remover()">Buscar</button>
+        <button onclick="remover()">Remover</button>
     </div>
 
     <h1>Listar resultado da pesquisa</h1>
@@ -33,41 +29,154 @@
         <button onclick="limparResultados()">Limpar Resultado</button><br>
         <ul id="titulos"></ul>
     </div>
-    <script src="jquery-3.2.1.min.js"></script> 
+    <script src="jquery-3.6.0.min.js"></script> 
     <script>
-        const URL = 'http://localhost:8080';
+        const URL = 'http://localhost:8080/titulo';
         
         incluir = () => {
+            let data = {
+                id: 0,
+                nome: nome.value,
+                descricao: desc.value
+            };
 
+            $.ajax({
+                method: 'POST',
+                url: URL,
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                success: result => {
+                    console.log('deu bom', result)
+
+                    listar();
+                    alert("Cadastro realizado com sucesso!")
+                },
+                error: e => {
+                    console.log(e)
+                    alert("Aconteceu uma falha!")
+                }
+            });
         }
 
         alterar = () => {
+            let id = filmeId.value === '' ? 0 : filmeId.value;
 
+            let data = {
+                id: 0,
+                nome: nome.value,
+                descricao: desc.value
+            };
+
+            $.ajax({
+                method: 'PUT',
+                url: URL + "/" + id,
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                success: result => {
+                    listar();
+                    alert("Alteração realizada com sucesso!")
+                },
+                error: error => {
+                    console.log(error)
+                    alert("Aconteceu uma falha!")
+                }
+            });
         }
 
         buscar = () => {
+            $.ajax({
+                method: 'GET',
+                url: URL + "/" + filmeId.value,
+                success: result => {
+                    nome.value = result.nome
+                    desc.value = result.descricao
+                },
+                error: error => {
+                    console.log(error);
 
+                    if (error.status === 404) 
+                        alert('Filme não encontrado')
+                    else
+                        alert("Aconteceu uma falha!")
+                }
+            });
         }
 
         remover = () => {
+            let urlDel = URL + "/" + filmeId.value;
 
+            $.ajax({
+                method: 'DELETE',
+                url: urlDel,
+                success: result => listar(),
+                error: erro => {
+                    console.log(error)
+
+                    if (e.status === 404) 
+                        alert('Filme não encontrado')
+                    else
+                        alert("Aconteceu uma falha!")
+                }
+            });
         }
 
         listar = () => {
-
+            $.ajax({
+                method: 'GET',
+                url: URL,
+                success: result => exibirResultado(result),
+                error: error => {
+                    console.log(error)
+                    alert("Aconteceu uma falha!")
+                }
+            });
         }
 
-        limparResultados = () => {
+        limparResultados = () => titulos.innerHTML = "";
 
+        criarItem = (parent, id, text) => {
+            let li = document.createElement("li");
+            
+            li.appendChild(document.createTextNode(text));
+            li.setAttribute("id", id);
+    
+            return li;
         }
+    
+        exibirResultado = (retornoApi) => {
+            let result = formatarResultado(retornoApi);
+
+            let ul = document.getElementById("titulos");
+            limparResultados();
+    
+            for (let index = 0; index < result.length; index++) {
+                let li = criarItem(ul, index, result[index]);
+    
+                ul.appendChild(li);
+            }       
+        }
+    
+        formatarResultado = (list) => list.map((item) => `id: ${item.id} - Nome: ${item.nome} - Descrição: ${item.descricao}`);
     </script>
 
     <style>
-        li,
         input,
         label,
         button {
             font-size: 20px;
+            margin-top: 5px;
+            margin-right: 5px;
+            margin-left: 5px;
+        }
+        button {
+            margin-bottom: 20px;
+        }
+        li {
+            font-size: 20px;
+        }
+        h1 {
+            margin-top: 0px;
+            margin-bottom: 0px;
         }
     </style>
 </body>
